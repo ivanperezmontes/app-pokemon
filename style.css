@@ -1,0 +1,49 @@
+body > *{
+    font-family: "Press Start 2P", system-ui;
+}
+ main{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+ }
+
+#search-bar {
+    width: 40%;
+}
+#pokemon-container{
+    display: flex;
+    flex-wrap: wrap;
+    gap: auto;
+}
+.pokemon-carta{
+    background-color: orange;
+    border-radius: 5%;
+    border: 1px black solid;
+    text-align: center;
+    color: white;
+    font-size: 20px;
+}
+.pokemon-carta *{
+    margin:10px;
+}
+.pokemon-carta img{
+    height: 250px;
+    width: auto;
+    contain: content;
+}
+.pokemon-carta p{
+    text-align: end;
+}
+#type-container{
+    display: flex;
+    flex-wrap: wrap;
+    margin: 20px 10px;
+}
+.tipo-div{
+    margin: 10px;
+}
+.tipo-div img{
+    border-radius: 20%;
+    height: 50px;
+}
+
