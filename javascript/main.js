@@ -8,102 +8,178 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-// Obtengo el contenedor del HTML
-const pokemonContainer = document.getElementById("pokemon-container");
-const typeContainer = document.getElementById("type-container");
-// Verifico si el contenedor existe para evitar errores
-if (!pokemonContainer) {
-    console.error("No se encontró el contenedor en el HTML.");
+// Función que inicializa la página de inicio (index.html)
+function initIndexPage() {
+    var _a, _b;
+    if (window.location.pathname === "/index.html") {
+        const pokemonContainer = document.getElementById("pokemon-container");
+        const typeContainer = document.getElementById("type-container");
+        let paginaActual = 0;
+        // Carga inicial de Pokémon y tipos
+        getPokemons(paginaActual);
+        getTypes();
+        // Eventos de paginación
+        (_a = document.getElementById("siguiente")) === null || _a === void 0 ? void 0 : _a.addEventListener("click", () => {
+            paginaActual++;
+            getPokemons(paginaActual);
+        });
+        (_b = document.getElementById("anterior")) === null || _b === void 0 ? void 0 : _b.addEventListener("click", () => {
+            if (paginaActual > 0) {
+                paginaActual--;
+                getPokemons(paginaActual);
+            }
+            else {
+                console.error("No hay páginas anteriores.");
+            }
+        });
+    }
 }
-else {
-    // Llamo a la función principal
-    getPokemons();
-}
-if (!typeContainer) {
-    console.error("No se encontro el contenedor en el HTML.");
-}
-else {
-    getTypes();
-}
+// Función para obtener los tipos de Pokémon
 function getTypes() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            const respuesta = yield fetch("https://pokeapi.co/api/v2/type");
-            const data = yield respuesta.json();
-            const dataList = data.results;
-            const promises = dataList.map((type) => __awaiter(this, void 0, void 0, function* () {
-                const res = yield fetch(type.url);
-                const data = yield res.json();
-                console.log(`Cargando ${data.name}`);
-                return data;
-            }));
-            const typeDetalles = yield Promise.all(promises);
-            renderType(typeDetalles);
+            const response = yield fetch("https://pokeapi.co/api/v2/type");
+            const data = yield response.json();
+            const promises = data.results.map((type) => fetch(type.url).then((res) => res.json()));
+            const typeDetails = yield Promise.all(promises);
+            renderTypes(typeDetails);
         }
         catch (error) {
             console.error("❌ Error al obtener los tipos:", error);
         }
     });
 }
-// Función async para obtener los Pokémon
-function getPokemons() {
+// Función para obtener los Pokémon
+function getPokemons(pagina) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            const respuesta = yield fetch("https://pokeapi.co/api/v2/pokemon?offset=0&limit=20");
-            const data = yield respuesta.json();
-            const pokemonList = data.results;
-            // Obtengo detalles de cada Pokémon
-            const promises = pokemonList.map((pokemon) => __awaiter(this, void 0, void 0, function* () {
-                const res = yield fetch(pokemon.url);
-                const data = yield res.json();
-                console.log(`📥 Cargando: ${data.name}`);
-                return data;
-            }));
-            const pokemonDetalles = yield Promise.all(promises);
-            // Renderizo los Pokémon en la página
-            renderPokemon(pokemonDetalles);
+            const limite = 21;
+            const offset = pagina * limite;
+            const response = yield fetch(`https://pokeapi.co/api/v2/pokemon?offset=${offset}&limit=${limite}`);
+            const data = yield response.json();
+            const pokemonDetails = yield Promise.all(data.results.map((pokemon) => fetch(pokemon.url).then((res) => res.json())));
+            renderPokemons(pokemonDetails);
         }
         catch (error) {
             console.error("❌ Error al obtener los Pokémon:", error);
         }
     });
 }
-// Función para mostrar los Pokémon en la página
-function renderPokemon(pokemonArray) {
+// Función para renderizar Pokémon en la página
+function renderPokemons(pokemonArray) {
+    const pokemonContainer = document.getElementById("pokemon-container");
     if (!pokemonContainer)
-        return; // Evita errores si no hay contenedor
-    pokemonContainer.innerHTML = ""; // Limpio el contenedor antes de agregar nuevos Pokémon
+        return;
+    pokemonContainer.innerHTML = ""; // Limpiar contenedor
     pokemonArray.forEach((pokemon) => {
+        if (!pokemon.sprites.front_default)
+            return;
+        const name = capitalize(pokemon.name);
         const div = document.createElement("div");
         div.classList.add("pokemon-carta");
-        const name = pokemon.name.charAt(0).toUpperCase() + pokemon.name.slice(1);
         div.innerHTML = `
       <h3>${name}</h3>
       <img src="${pokemon.sprites.front_default}" alt="${name}">
       <p>${pokemon.id}</p>
     `;
+        div.addEventListener("click", () => {
+            window.location.href = `pagina_detalles.html?id=${pokemon.id}`;
+        });
         pokemonContainer.appendChild(div);
     });
 }
-// Función para mostrar los tipos
-function renderType(typeArray) {
+// Función para renderizar los tipos de Pokémon
+function renderTypes(typeArray) {
+    const typeContainer = document.getElementById("type-container");
+    if (!typeContainer)
+        return;
     typeArray.forEach((type) => {
         var _a, _b, _c;
-        const button = document.createElement("div");
-        button.classList.add("tipo-div");
-        const name = type.name.charAt(0).toUpperCase() + type.name.slice(1);
-        const color = type.color; // Color del tipo
-        // Logo del tipo (o puedes usar otro sprite)
-        button.style.backgroundColor = color;
-        const spriteUrl = ((_c = (_b = (_a = type.sprites) === null || _a === void 0 ? void 0 : _a["generation-viii"]) === null || _b === void 0 ? void 0 : _b["sword-shield"]) === null || _c === void 0 ? void 0 : _c["name_icon"]) || ""; // URL del sprite
+        const div = document.createElement("div");
+        div.classList.add("tipo-div");
+        const name = capitalize(type.name);
+        const color = type.color || "#ffffff"; // Color de fondo del tipo
+        const spriteUrl = ((_c = (_b = (_a = type.sprites) === null || _a === void 0 ? void 0 : _a["generation-viii"]) === null || _b === void 0 ? void 0 : _b["sword-shield"]) === null || _c === void 0 ? void 0 : _c["name_icon"]) || "";
         if (!spriteUrl) {
-            console.log(`El tipo ${type.name} no tiene sprite disponible, se omitirá.`);
-            return; // Si no tiene sprite, no lo mostramos
+            console.log(`El tipo ${type.name} no tiene imagen disponible, se omitirá.`);
+            return; // Si no tiene imagen, no lo mostramos
         }
-        console.log(type);
-        button.innerHTML = `
-    ${spriteUrl ? `<img src="${spriteUrl}" alt="${name}" />` : "Sin imagen disponible"}
-        `;
-        typeContainer === null || typeContainer === void 0 ? void 0 : typeContainer.appendChild(button);
+        div.innerHTML = `
+      ${spriteUrl
+            ? `<img src="${spriteUrl}" alt="${name}" />`
+            : "Sin imagen disponible"}
+    `;
+        div.addEventListener("click", () => {
+            filtradoTipo(type.name);
+        });
+        typeContainer.appendChild(div);
     });
 }
+// Función para filtrar Pokémon por tipo
+function filtradoTipo(tipo) {
+    return __awaiter(this, void 0, void 0, function* () {
+        try {
+            const response = yield fetch(`https://pokeapi.co/api/v2/type/${tipo}`);
+            const data = yield response.json();
+            const pokemonList = data.pokemon.map((p) => p.pokemon);
+            const pokemonDetails = yield Promise.all(pokemonList.map((pokemon) => fetch(pokemon.url).then((res) => res.json())));
+            renderPokemons(pokemonDetails);
+        }
+        catch (error) {
+            console.error(`Error al filtrar los Pokémon de tipo ${tipo}:`, error);
+        }
+    });
+}
+// Función para obtener y mostrar los detalles de un Pokémon
+function initDetailPage() {
+    if (window.location.pathname === "/pagina_detalles.html") {
+        const urlParams = new URLSearchParams(window.location.search);
+        const pokemonId = urlParams.get("id");
+        if (pokemonId) {
+            getPokemonDetails(pokemonId);
+        }
+        else {
+            console.error("No se proporcionó un ID de Pokémon.");
+        }
+    }
+}
+// Función para obtener los detalles de un Pokémon
+function getPokemonDetails(pokemonId) {
+    return __awaiter(this, void 0, void 0, function* () {
+        try {
+            const response = yield fetch(`https://pokeapi.co/api/v2/pokemon/${pokemonId}`);
+            const pokemon = yield response.json();
+            renderPokemonDetails(pokemon);
+        }
+        catch (error) {
+            console.error("❌ Error al obtener los detalles del Pokémon:", error);
+        }
+    });
+}
+// Función para mostrar los detalles del Pokémon
+function renderPokemonDetails(pokemon) {
+    const pokemonDetailContainer = document.getElementById("pokemon-detail-container");
+    if (!pokemonDetailContainer)
+        return;
+    const name = capitalize(pokemon.name);
+    const sprite = pokemon.sprites.front_default;
+    const types = pokemon.types
+        .map((type) => type.type.name)
+        .join(", ");
+    const stats = pokemon.stats
+        .map((stat) => `${stat.stat.name}: ${stat.base_stat}`)
+        .join("<br>");
+    pokemonDetailContainer.innerHTML = `
+    <h2>${name}</h2>
+    <img src="${sprite}" alt="${name}">
+    <p class="types"><strong>Tipo(s):</strong> ${types}</p>
+    <p class="stats"><strong>Estadísticas:</strong><br> ${stats}</p>
+  `;
+}
+// Función auxiliar para capitalizar el nombre
+function capitalize(name) {
+    return name.charAt(0).toUpperCase() + name.slice(1);
+}
+// Inicialización de las páginas
+initIndexPage();
+initDetailPage();
